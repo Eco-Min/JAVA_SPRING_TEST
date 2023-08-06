@@ -71,6 +71,10 @@ public class UserService {
         userEntity.setStatus(UserStatus.ACTIVE);
     }
 
+    public void removeALl() {
+        userRepository.deleteAll();
+    }
+
     private void sendCertificationEmail(String email, String certificationUrl) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
