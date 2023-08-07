@@ -1,5 +1,7 @@
 # JAVA / SPRING Test 를 작성해보자
 
+# JUnit 과 Assertions, MockMvc 를 이용한 Test 를 해보자
+
 ## 테스트란 무엇인가?
 
 ### 테스트란?
@@ -44,7 +46,7 @@ API 테스트 , 통합 테스트, 단위 테스트 -> 사람마다 모호 하고
 - small test 80%  
   단일 서버, 단일 프로세스, 단일 스레드, 디스크 I/O X, Blocking call X
 - medium test 15%  
-  단일 서버, 멀티 프로세스, 멀티 스레드 -> h2 등 test db O
+  단일 서버, 멀티 프로세스, 멀티 스레드 -> h2 등 test db O  
   -> 대부분의 spring 개발자는 중형 테스트를 너무 많이 한다..
 - large test 5%
   멀티 서버, End to end test
@@ -109,3 +111,54 @@ private 메소드는 테스트 하지 않아도 된다
 -> private 메소드가 아니어야 한다는 의미, 다른 클래스로 분리/책임을 위임하여 public으로 해야한다는 신호
 
 final 메소드를 stub 하는 상황을 피해야 한다
+
+<br>
+<br>
+
+# 레이어드 아키텍처의 문제점과 해결책
+
+### 모든 테스트가 h2(DB) 가 필요하다
+
+테스트 3분류에서 나온 것 처름 **_중형 테스트_** 만 사용되었다  
+-> 설계가 잘못되엇을 확률  
+-> 지금 작성한 테스타가 실제로 테스트가 필요한게 아닐 확률
+
+RDB에 강결합 되어있고 mokito 와 h2(DB) 에 너무 의존적이다
+
+> 왜? 이렇게 되었을까 -> 레이어드 아키텍처 때문 일 확률이 있다
+
+- 레이어드 아키텍쳐란?  
+  유사간 기능들ㅇ르 같은 계층으로 묶어 관리하는 방식의 아키텍처 구조  
+  의존성 역전이나 추상화 없이 바로 구현체를 사용하는 구조
+
+### 레이어드 아키텍처의 단점
+
+1. DB 주도 설계  
+   테이블이 어떻게 생겨야하는지, 어떤값을 가져야하는지  
+   But **_Use Case_** 를 파악하는게 먼저이며 도메인과, 도메인들의 관계를 먼저 생각해야한다.
+2. 동시작업
+3. 도메인이 죽는다
+4. 동시작업이 불가
+5. 규모가 커질수록 확장성이 떨어진다.
+
+-> 정말 service 계층만 중요 하게 된다.
+
+그래서 계층을 아래 표처럼 변경 할 예정
+|기존|변경|
+|---|---|
+|controller|controller|
+|service|service|
+||domain
+|repository|repository|
+
+service -> entity를 repository 에서 가져와 책임을 위임 할 예정  
+domain -> OOP 스러운 도메인들이 협력하는 곳 -> entity 와는 다르게 둘 예정
+
+이걸 좀더 구체화 를 하게 되면
+
+|              |            |                      |                         |
+| ------------ | ---------- | -------------------- | ----------------------- |
+| Presentation | controller | <interface\> service |
+| Business     |            | serviceimpl          | <interface\> repository |
+| (OOP) Domain |            | domain               |                         |
+| Persistence  |            |                      | repositoryimpl          |
