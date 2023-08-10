@@ -156,9 +156,9 @@ domain -> OOP 스러운 도메인들이 협력하는 곳 -> entity 와는 다르
 
 이걸 좀더 구체화 를 하게 되면
 
-|              |            |                      |                         |
-| ------------ | ---------- | -------------------- | ----------------------- |
+|              |            |                      |                                 |
+| ------------ | ---------- | -------------------- | ------------------------------- |
 | Presentation | controller | <interface\> service |
-| Business     |            | serviceimpl          | <interface\> repository |
-| (OOP) Domain |            | domain               |                         |
-| Persistence  |            |                      | repositoryimpl          |
+| Business     |            | serviceimpl          | <interface\> repository         |
+| (OOP) Domain |            | domain               |                                 |
+| Persistence  |            |                      | repositoryimpl = infrastructure |
