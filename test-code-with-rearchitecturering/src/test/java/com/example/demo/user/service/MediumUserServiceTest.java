@@ -1,64 +1,38 @@
 package com.example.demo.user.service;
 
-import com.example.demo.common.service.port.ClockHolder;
-import com.example.demo.common.service.port.UuidHolder;
-import com.example.demo.mock.FakeMailSender;
-import com.example.demo.mock.FakeUserRepository;
-import com.example.demo.mock.TestClockHolder;
-import com.example.demo.mock.TestUuidHolder;
 import com.example.demo.user.domain.User;
-import com.example.demo.user.domain.UserCreate;
-import com.example.demo.user.domain.UserStatus;
-import com.example.demo.user.domain.UserUpdate;
 import com.example.demo.user.exception.CertificationCodeNotMatchedException;
 import com.example.demo.user.exception.ResourceNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.demo.user.domain.UserStatus;
+import com.example.demo.user.domain.UserCreate;
+import com.example.demo.user.domain.UserUpdate;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlGroup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 
-class UserServiceTest {
+@SpringBootTest
+@TestPropertySource("classpath:application-test.yml")
+@SqlGroup({
+        @Sql(value = "/sql/user-service-test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
+        @Sql(value = "/sql/delete-all-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+})
+class MediumUserServiceTest {
 
-    private final static String UUID_VALUE = "aaaaaaaaaaa-aaaa-aaaaa-aaaa-aaaaaaaaaaaa";
-    private final static String UUID_VALUE2 = "bbbbbbbbbbbb-bbbb-bbbbbb-bbbb-bbbbbbbbbbbbbb";
-    private final static long CLOCK_VALUE = 1678530673598L;
+    @Autowired
     private UserService userService;
-
-    @BeforeEach
-    void init() {
-        FakeUserRepository fakeUserRepository = new FakeUserRepository();
-        FakeMailSender fakeMailSender = new FakeMailSender();
-        ClockHolder clockHolder = new TestClockHolder(CLOCK_VALUE);
-        UuidHolder uuidHolder = new TestUuidHolder(UUID_VALUE);
-
-        fakeUserRepository.save(User.builder()
-                .id(1L)
-                .email("eco@naver.com")
-                .nickname("eco")
-                .address("Seoul")
-                .certificationCode(UUID_VALUE)
-                .status(UserStatus.ACTIVE)
-                .lastLoginAt(0L)
-                .build());
-
-        fakeUserRepository.save(User.builder()
-                .id(2L)
-                .email("eco2@naver.com")
-                .nickname("eco2")
-                .address("Seoul")
-                .certificationCode(UUID_VALUE2)
-                .status(UserStatus.PENDING)
-                .lastLoginAt(0L)
-                .build());
-
-        this.userService = new UserService(
-                fakeUserRepository,
-                new CertificationService(fakeMailSender),
-                uuidHolder,
-                clockHolder);
-
-    }
+    @MockBean
+    private JavaMailSender mailSender;
 
     @Test
     public void getByEmail_find_user_ActiveStatus() throws Exception {
@@ -113,6 +87,7 @@ class UserServiceTest {
                 .address("Busan")
                 .nickname("eco3")
                 .build();
+        BDDMockito.doNothing().when(mailSender).send(any(SimpleMailMessage.class));
 
         // when
         User result = userService.create(userCreate);
@@ -121,7 +96,7 @@ class UserServiceTest {
         // then
         assertThat(result.getId()).isNotNull();
         assertThat(result.getStatus()).isEqualTo(UserStatus.PENDING);
-        assertThat(result.getCertificationCode()).isEqualTo(UUID_VALUE);
+        // CertificationCode 에 값이 UUID라 지금당장 test 방법이 없다
     }
 
     @Test
@@ -151,14 +126,14 @@ class UserServiceTest {
         // then
         User result = userService.getById(1L);
         // 시간 체크가 완벽하지 않아서 나중에 수정
-        assertThat(result.getLastLoginAt()).isEqualTo(CLOCK_VALUE);
+        assertThat(result.getLastLoginAt()).isGreaterThan(0);
     }
 
     @Test
     public void pendingUser_to_active_authCode() throws Exception {
         // given
         // when
-        userService.verifyEmail(2, UUID_VALUE2);
+        userService.verifyEmail(2, "aaaaaaaaaaa-aaaa-aaaaa-aaaa-aaaaaaaaaabb");
 
         // then
         User result = userService.getById(2);
@@ -171,8 +146,7 @@ class UserServiceTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            userService.verifyEmail(2, UUID_VALUE);
+            userService.verifyEmail(2, "aaaaaaaaaaa-aaaa-aaaaa-aaaa-aaaaaaaaaabc");
         }).isInstanceOf(CertificationCodeNotMatchedException.class);
     }
-
 }

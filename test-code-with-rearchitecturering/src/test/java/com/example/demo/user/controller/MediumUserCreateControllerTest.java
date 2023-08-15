@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SqlGroup({
         @Sql(value = "/sql/delete-all-data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 })
-class UserCreateControllerTest {
+class MediumUserCreateControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
