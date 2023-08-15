@@ -1,12 +1,11 @@
 package com.example.demo.user.service;
 
+import com.example.demo.user.domain.User;
 import com.example.demo.user.exception.CertificationCodeNotMatchedException;
 import com.example.demo.user.exception.ResourceNotFoundException;
 import com.example.demo.user.domain.UserStatus;
 import com.example.demo.user.domain.UserCreate;
 import com.example.demo.user.domain.UserUpdate;
-import com.example.demo.user.infrastructure.UserEntity;
-import com.example.demo.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,7 @@ class UserServiceTest {
         String email = "eco@naver.com";
 
         // when
-        UserEntity result = userService.getByEmail(email);
+        User result = userService.getByEmail(email);
 
         // then
         assertThat(result.getNickname()).isEqualTo("eco");
@@ -55,7 +54,7 @@ class UserServiceTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            UserEntity result = userService.getByEmail(email);
+            User result = userService.getByEmail(email);
         }).isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -63,7 +62,7 @@ class UserServiceTest {
     public void getById_find_user_ActiveStatus() throws Exception {
         // given
         // when
-        UserEntity result = userService.getById(1L);
+        User result = userService.getById(1L);
 
         // then
         assertThat(result.getNickname()).isEqualTo("eco");
@@ -75,14 +74,14 @@ class UserServiceTest {
         // when
         // then
         assertThatThrownBy(() -> {
-            UserEntity result = userService.getById(2L);
+            User result = userService.getById(2L);
         }).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     public void create_by_userCreate() throws Exception {
         // given
-        userService.removeALl();
+        userService.removeAll();
         UserCreate userCreate = UserCreate.builder()
                 .email("eco3@naver.com")
                 .address("Busan")
@@ -91,7 +90,8 @@ class UserServiceTest {
         BDDMockito.doNothing().when(mailSender).send(any(SimpleMailMessage.class));
 
         // when
-        UserEntity result = userService.create(userCreate);
+        User result = userService.create(userCreate);
+        System.out.println("result = " + result);
 
         // then
         assertThat(result.getId()).isNotNull();
@@ -111,7 +111,7 @@ class UserServiceTest {
         userService.update(1, userUpdate);
 
         // then
-        UserEntity result = userService.getById(1L);
+        User result = userService.getById(1L);
         assertThat(result.getId()).isNotNull();
         assertThat(result.getAddress()).isEqualTo("Incheon");
         assertThat(result.getNickname()).isEqualTo("eco-update");
@@ -124,7 +124,7 @@ class UserServiceTest {
         userService.login(1);
 
         // then
-        UserEntity result = userService.getById(1L);
+        User result = userService.getById(1L);
         // 시간 체크가 완벽하지 않아서 나중에 수정
         assertThat(result.getLastLoginAt()).isGreaterThan(0);
     }
@@ -136,7 +136,7 @@ class UserServiceTest {
         userService.verifyEmail(2, "aaaaaaaaaaa-aaaa-aaaaa-aaaa-aaaaaaaaaabb");
 
         // then
-        UserEntity result = userService.getById(2);
+        User result = userService.getById(2);
         assertThat(result.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
 
