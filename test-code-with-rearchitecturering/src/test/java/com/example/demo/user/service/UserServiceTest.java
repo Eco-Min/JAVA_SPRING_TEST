@@ -23,7 +23,7 @@ class UserServiceTest {
     private final static String UUID_VALUE = "aaaaaaaaaaa-aaaa-aaaaa-aaaa-aaaaaaaaaaaa";
     private final static String UUID_VALUE2 = "bbbbbbbbbbbb-bbbb-bbbbbb-bbbb-bbbbbbbbbbbbbb";
     private final static long CLOCK_VALUE = 1678530673598L;
-    private UserService userService;
+    private UserServiceImpl userService;
 
     @BeforeEach
     void init() {
@@ -52,9 +52,9 @@ class UserServiceTest {
                 .lastLoginAt(0L)
                 .build());
 
-        this.userService = new UserService(
+        this.userService = new UserServiceImpl(
                 fakeUserRepository,
-                new CertificationService(fakeMailSender),
+                new CertificationServiceImpl(fakeMailSender),
                 uuidHolder,
                 clockHolder);
 
